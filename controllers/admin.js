@@ -1,4 +1,4 @@
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, DeleteObjectsCommand } = require("@aws-sdk/client-s3");
 const { Genres, Beats, Tags, Licenses } = require("../models/beat");
 const s3 = new S3Client({
     credentials: {
@@ -194,6 +194,8 @@ const uploadBeat = async (req, res) => {
     }
 
     try {
+        const beatExists = await Beats.findOne({ name });
+        if (beatExists) return await res.status(400).json({ message: "Beat name should be unique" })
         const db_genres = await Genres.find({ _id: { $in: req.body?.genre } }).select("name");
         const db_tags = await Tags.find({ _id: { $in: req.body?.tag } });
         // uploading mp3, wav, stems and image to s3
@@ -213,14 +215,33 @@ const uploadBeat = async (req, res) => {
         });
         await Promise.all(uploadPromises);
         const beat = await Beats.create({ name, bpm, key, files: fileNames, genre: db_genres?.map(item => item?.name), tags: db_tags?.map(item => item?.name) });
-        res.status(201).json(beat);
+        res.status(201).json({ message: `${beat.name} Uploaded Successfully`, data: beat });
     } catch (err) {
         res.status(400).json({ message: err.message || "Upload failed" });
     }
 }
 
+const deleteBeat = async (req, res) => {
+    if (!req.params?.id) return res.status(404).json({ message: "beat id is required" });
+    const { id: _id } = req.params
+    try {
+        const { files } = await Beats.findOne({ _id }).select(" -_id");
+        const params = {
+            Bucket: process.env.BUCKET_NAME,
+            Delete: {
+                Objects: Object.values(files.toObject()).map(file => ({ Key: file }))
+            }
+        }
+        let command = new DeleteObjectsCommand(params)
+        await s3.send(command);  //deleting files from S3
+        let deleted = await Beats.findOneAndDelete({ _id }) //deleting files from DB
+        return res.json({ message: `${deleted.name} Deleted Successfully` });
+    } catch (err) {
+        return res.status(400).json({ message: err })
+    }
+}
+
 module.exports = {
-    uploadBeat,
     createGenre,
     updateGenre,
     deleteGenre,
@@ -232,5 +253,7 @@ module.exports = {
     createLicense,
     updateLicense,
     deleteLicense,
-    getLicenses
+    getLicenses,
+    uploadBeat,
+    deleteBeat
 }

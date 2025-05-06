@@ -1,5 +1,5 @@
 const express = require("express");
-const { uploadBeat, createGenre, updateGenre, deleteGenre, getGenres, createTag, getTags, updateTag, deleteTag, createLicense, getLicenses, updateLicense, deleteLicense } = require("../controllers/admin");
+const { uploadBeat, createGenre, updateGenre, deleteGenre, getGenres, createTag, getTags, updateTag, deleteTag, createLicense, getLicenses, updateLicense, deleteLicense, deleteBeat } = require("../controllers/admin");
 const router = express.Router();
 const multer = require("multer");
 const storage = multer.memoryStorage();
@@ -23,6 +23,7 @@ router.post("/beat", upload.fields(
             maxCount: 1
         }
     ]), uploadBeat);
+router.route("/beat/:id").delete(deleteBeat);
 
 router.route("/genre").post(createGenre).get(getGenres);
 router.route("/genre/:id").patch(updateGenre).delete(deleteGenre);

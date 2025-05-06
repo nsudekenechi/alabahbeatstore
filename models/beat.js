@@ -118,7 +118,8 @@ const Beats = mongoose.Schema({
             wav: String,
             trackout: String
         },
-        required: true
+        required: true,
+        _id: false
     }
 })
 
