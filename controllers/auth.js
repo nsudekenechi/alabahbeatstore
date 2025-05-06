@@ -17,11 +17,12 @@ const signup = async (req, res) => {
 }
 
 const login = async (req, res) => {
+    if (!req.body?.email || !req.body?.password) return res.status(400).json({ message: "Email and Password is required!" });
     const { email, password } = req.body;
-    if (!email || !password) return res.status(400).json({ message: "Email and Password is required!" });
+
     try {
         const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: "User doesn't exist" });
+        if (!user) return res.status(404).json({ message: "Email or Password is not correct!" });
         const passwordMatched = await bcrypt.compare(password, user.password);
         if (!passwordMatched) return res.status(400).json({ message: "Email or Password is not correct!" });
         const token = jwt.sign({ user }, process.env.JWT_KEY);
