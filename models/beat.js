@@ -16,30 +16,63 @@ const Genres = mongoose.Schema({
     }
 })
 
-const Licenses = mongoose.Schema({
-    name: {
-        type: String,
-        required: true,
-        unique: true
-    },
-    description: String,
-    format: {
-        type: [String],
-        enum: ["mp3", "wav", "trackout"],
-        required: true
-    },
-    price: {
-        type: Number,
-        required: true
-    },
-    territory: String,
-    state: String,
-    termsOfYears: Number,
-    distributionCopies: Number,
-    audioStreams: Number,
-    // freeDownloads: Number | String,
+const Licenses = mongoose.Schema(
+    {
+        name: {
+            type: String,
+            required: true,
+            unique: true, // e.g., "Basic", "Premium", "Unlimited"
+        },
+        description: String, // optional marketing text
 
-})
+        format: {
+            type: [String],
+            enum: ["mp3", "wav", "trackout"], // What files are delivered with this license
+            default: ["mp3"]
+        },
+
+        price: {
+            type: Number,
+            required: true
+        },
+
+        territory: {
+            type: String,
+            default: "Worldwide"
+        },
+
+        state: {
+            type: String, // e.g., "Non-exclusive", "Exclusive"
+            default: "Non-exclusive"
+        },
+
+        termsOfYears: {
+            type: Number, // e.g., 1 year or 5 years validity
+            default: 1
+        },
+
+        distributionCopies: {
+            type: Number, // Max physical or digital copies allowed
+            default: 5000
+        },
+
+        audioStreams: {
+            type: Number, // Max number of streams
+            default: 1000000
+        },
+
+        freeDownloads: {
+            type: mongoose.Schema.Types.Mixed, // Can be number or "unlimited"
+            default: "unlimited",
+            validate: {
+                validator: function (value) {
+                    return typeof value === "number" || value === "unlimited";
+                },
+                message: "freeDownloads must be a number or 'unlimited'"
+            }
+        }
+    });
+
 
 const Beats = mongoose.Schema({
     name: {

@@ -78,7 +78,7 @@ const updateTag = async (req, res) => {
     const { id: _id } = req.params;
     const { name } = req.body;
     try {
-        const updated_tag = await Tags.findByIdAndUpdate({ _id }, { name });
+        const updated_tag = await Tags.findByIdAndUpdate({ _id }, { name }, { new: true });
         return res.json({ message: "Tag updated successfully", data: updated_tag });
     } catch (err) {
         return res.status(400).json({ message: err })
@@ -109,7 +109,7 @@ const getTags = async (req, res) => {
 
 // License controller starts
 const createLicense = async (req, res) => {
-    if (!req.body?.name || !req.body?.format || !req.body?.price) return res.status(400).json({ message: "name, format and price are required!" });
+    if (!req.body?.name || !req.body?.format || !req.body?.price) return res.status(400).json({ message: "name and price are required!" });
     const { name, description, format, price, territory, state, termsOfYears, distributionCopies, audioStreams } = req.body
     try {
         const license = await Licenses.create({ name, description, format, price, territory, state, termsOfYears, distributionCopies, audioStreams });
@@ -124,8 +124,9 @@ const createLicense = async (req, res) => {
 const updateLicense = async (req, res) => {
     if (!req.params?.id) return res.status(400).json({ message: "Id is required" })
     const { id: _id } = req.params;
+    const { name, description, format, price, territory, state, termsOfYears, distributionCopies, audioStreams } = req.body
     try {
-        const updated_license = await Licenses.findByIdAndUpdate({ _id }, { ...req.body });
+        const updated_license = await Licenses.findByIdAndUpdate({ _id }, { name, description, format, price, territory, state, termsOfYears, distributionCopies, audioStreams }, { new: true });
         return res.json({ message: "License updated successfully", data: updated_license });
     } catch (err) {
         return res.status(400).json({ message: err })
