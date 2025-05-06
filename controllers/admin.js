@@ -16,7 +16,7 @@ const createGenre = async (req, res) => {
         const alreadyExists = await Genres.findOne({ name });
         if (alreadyExists) return res.status(400).json({ message: "Genre already exists!" });
         const genre = await Genres.create({ name });
-        return res.json({ message: "Genre created successfully", data: genre });
+        return res.json({ message: `${genre.name} created successfully`, data: genre });
     } catch (err) {
         res.status(400).json({ message: err })
     }
@@ -28,7 +28,7 @@ const updateGenre = async (req, res) => {
     const { name } = req.body;
     try {
         const updated_genre = await Genres.findByIdAndUpdate({ _id: id }, { name }, { new: true });
-        return res.json({ message: "Genre updated successfully.", data: updated_genre });
+        return res.json({ message: `${updated_genre.name} updated successfully.`, data: updated_genre });
     } catch (err) {
         return res.status(400).json({ message: err })
     }
@@ -41,8 +41,8 @@ const deleteGenre = async (req, res) => {
     try {
         const isExisting = await Genres.findOne({ _id });
         if (!isExisting) return res.status(404).json({ message: "Genre doesn't exist" });
-        await Genres.findByIdAndDelete({ _id });
-        return res.json({ message: "Genre deleted successfully." })
+        const deleted = await Genres.findByIdAndDelete({ _id });
+        return res.json({ message: `${deleted.name} deleted successfully.` })
     } catch (err) {
         return res.status(400).json({ message: err })
     }
@@ -67,7 +67,7 @@ const createTag = async (req, res) => {
         const alreadyExists = await Tags.findOne({ name });
         if (alreadyExists) return res.status(400).json({ message: "Tag already exists!" });
         const genre = await Tags.create({ name });
-        return res.json({ message: "Tag created successfully", data: genre });
+        return res.json({ message: `${genre.name} created successfully`, data: genre });
     } catch (err) {
         return res.status(400).json({ message: err })
     }
@@ -79,7 +79,7 @@ const updateTag = async (req, res) => {
     const { name } = req.body;
     try {
         const updated_tag = await Tags.findByIdAndUpdate({ _id }, { name }, { new: true });
-        return res.json({ message: "Tag updated successfully", data: updated_tag });
+        return res.json({ message: `${updated_tag.name} updated successfully`, data: updated_tag });
     } catch (err) {
         return res.status(400).json({ message: err })
     }
@@ -90,8 +90,8 @@ const deleteTag = async (req, res) => {
     const { id: _id } = req.params;
 
     try {
-        await Tags.findByIdAndDelete({ _id });
-        return res.json({ message: "Genre deleted successfully." })
+        const deleted = await Tags.findByIdAndDelete({ _id });
+        return res.json({ message: `${deleted.name} deleted successfully.` })
     } catch (err) {
         return res.status(400).json({ message: err })
     }
@@ -114,7 +114,7 @@ const createLicense = async (req, res) => {
     try {
         const license = await Licenses.create({ name, description, format, price, territory, state, termsOfYears, distributionCopies, audioStreams });
 
-        return res.status(201).json({ message: "License created successfully", data: license })
+        return res.status(201).json({ message: `${license.name} created successfully`, data: license })
 
     } catch (err) {
         return res.status(400).json({ message: err });
@@ -127,7 +127,7 @@ const updateLicense = async (req, res) => {
     const { name, description, format, price, territory, state, termsOfYears, distributionCopies, audioStreams } = req.body
     try {
         const updated_license = await Licenses.findByIdAndUpdate({ _id }, { name, description, format, price, territory, state, termsOfYears, distributionCopies, audioStreams }, { new: true });
-        return res.json({ message: "License updated successfully", data: updated_license });
+        return res.json({ message: `${updated_license.name} updated successfully`, data: updated_license });
     } catch (err) {
         return res.status(400).json({ message: err })
     }
@@ -137,8 +137,8 @@ const deleteLicense = async (req, res) => {
     if (!req.params?.id) return res.status(400).json({ message: "Id is required" })
     const { id: _id } = req.params;
     try {
-        await Licenses.findByIdAndDelete({ _id });
-        return res.json({ message: "License deleted successfully." });
+        const deleted = await Licenses.findByIdAndDelete({ _id });
+        return res.json({ message: `${deleted.name} License deleted successfully.` });
     } catch (err) {
         return res.status(400).json({ message: err })
     }
