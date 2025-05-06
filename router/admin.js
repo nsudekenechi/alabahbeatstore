@@ -4,7 +4,7 @@ const router = express.Router();
 const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage })
-router.post("/upload", upload.fields(
+router.post("/beat", upload.fields(
     [
         {
             name: "mp3",

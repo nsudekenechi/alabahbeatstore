@@ -154,13 +154,15 @@ const getLicenses = async (req, res) => {
 }
 // License controller ends
 const uploadBeat = async (req, res) => {
+
+
     // checking if files 
     if (!req.files?.mp3 || !req.files?.wav || !req.files?.trackout || !req.files?.image) return res.status(400).json({ message: "mp3, wav, trackout and image fields are required!" });
 
-    if (!req.body?.name || !req.body?.bpm || !req.body?.key) return res.status(400).json({ message: "name, bpm, key, genre are required!" });
+    if (!req.body?.name || !req.body?.bpm || !req.body?.key) return res.status(400).json({ message: "name, bpm, key are required!" });
 
     let { mp3, wav, trackout, image } = req.files;
-    let { name, bpm, key, genre } = req.body;
+    let { name, bpm, key } = req.body;
     let fileNames = {};
     let errors = [];
     if (mp3[0].mimetype !== "audio/mpeg") {
@@ -192,6 +194,8 @@ const uploadBeat = async (req, res) => {
     }
 
     try {
+        const db_genres = await Genres.find({ _id: { $in: req.body?.genre } }).select("name");
+        const db_tags = await Tags.find({ _id: { $in: req.body?.tag } });
         // uploading mp3, wav, stems and image to s3
         const uploadPromises = Object.entries(req.files).map(([key, data]) => {
             let file = data[0];
@@ -208,7 +212,7 @@ const uploadBeat = async (req, res) => {
             return s3.send(command);
         });
         await Promise.all(uploadPromises);
-        const beat = await Beats.create({ name, bpm, key, genre, files: fileNames });
+        const beat = await Beats.create({ name, bpm, key, files: fileNames, genre: db_genres?.map(item => item?.name), tags: db_tags?.map(item => item?.name) });
         res.status(201).json(beat);
     } catch (err) {
         res.status(400).json({ message: err.message || "Upload failed" });
