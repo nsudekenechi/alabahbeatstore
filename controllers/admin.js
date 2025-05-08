@@ -238,6 +238,25 @@ const updateBeat = async (req, res) => {
     }
 }
 
+const getBeats = async (req, res) => {
+    try {
+        const beats = await Beats.find({});
+        return res.json(beats)
+    } catch (err) {
+        res.status(400).json({ message: err })
+    }
+}
+
+const getBeat = async (req, res) => {
+    try {
+        if (!req.params?.id) return res.status(400).json({ message: "Beat id is required!" })
+        const beats = await Beats.findById(req.params.id)
+        return res.json(beats)
+    } catch (err) {
+        res.status(400).json({ message: err })
+    }
+}
+
 const uploadFilesToS3 = async (files) => {
 
     let fileNames = {};
@@ -331,5 +350,7 @@ module.exports = {
     getLicenses,
     uploadBeat,
     deleteBeat,
-    updateBeat
+    updateBeat,
+    getBeats,
+    getBeat
 }

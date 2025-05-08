@@ -1,10 +1,10 @@
 const express = require("express");
-const { uploadBeat, createGenre, updateGenre, deleteGenre, getGenres, createTag, getTags, updateTag, deleteTag, createLicense, getLicenses, updateLicense, deleteLicense, deleteBeat, updateBeat } = require("../controllers/admin");
+const { uploadBeat, createGenre, updateGenre, deleteGenre, getGenres, createTag, getTags, updateTag, deleteTag, createLicense, getLicenses, updateLicense, deleteLicense, deleteBeat, updateBeat, getBeat, getBeats } = require("../controllers/admin");
 const router = express.Router();
 const multer = require("multer");
 const storage = multer.memoryStorage();
 const upload = multer({ storage })
-router.post("/beat", upload.fields(
+router.route("/beat").post(upload.fields(
     [
         {
             name: "mp3",
@@ -22,7 +22,7 @@ router.post("/beat", upload.fields(
             name: "image",
             maxCount: 1
         }
-    ]), uploadBeat);
+    ]), uploadBeat).get(getBeats);
 router.route("/beat/:id").delete(deleteBeat).patch(upload.fields(
     [
         {
@@ -41,7 +41,7 @@ router.route("/beat/:id").delete(deleteBeat).patch(upload.fields(
             name: "image",
             maxCount: 1
         }
-    ]), updateBeat);
+    ]), updateBeat).get(getBeat);
 
 router.route("/genre").post(createGenre).get(getGenres);
 router.route("/genre/:id").patch(updateGenre).delete(deleteGenre);
