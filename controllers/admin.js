@@ -154,66 +154,21 @@ const getLicenses = async (req, res) => {
 }
 // License controller ends
 const uploadBeat = async (req, res) => {
-
-
     // checking if files 
     if (!req.files?.mp3 || !req.files?.wav || !req.files?.trackout || !req.files?.image) return res.status(400).json({ message: "mp3, wav, trackout and image fields are required!" });
 
     if (!req.body?.name || !req.body?.bpm || !req.body?.key) return res.status(400).json({ message: "name, bpm, key are required!" });
-
-    let { mp3, wav, trackout, image } = req.files;
     let { name, bpm, key } = req.body;
-    let fileNames = {};
-    let errors = [];
-    if (mp3[0].mimetype !== "audio/mpeg") {
-        errors.push("Only .mp3 files are allowed in the mp3 field.");
-    }
-
-    if (wav[0].mimetype !== "audio/wav" && wav[0].mimetype !== "audio/wave" && wav[0].mimetype !== "audio/x-wav") {
-        errors.push("Only .wav files are allowed in the wav field.");
-    }
-
-    const validTrackoutTypes = [
-        "application/zip",
-        "application/rar",
-        "application/x-rar-compressed",
-        "application/x-zip-compressed",
-    ];
-
-    if (!validTrackoutTypes.includes(trackout[0].mimetype)) {
-        errors.push("Only .zip or .rar files are allowed in the trackout field.");
-    }
-
-    const validImageTypes = ["image/png", "image/jpeg", "image/jpg"];
-    if (!validImageTypes.includes(image[0].mimetype)) {
-        errors.push("Only .png, .jpg, .jpeg files are allowed in the image field.");
-    }
-
-    if (errors.length > 0) {
-        return res.status(400).json({ errors });
-    }
-
     try {
         const beatExists = await Beats.findOne({ name });
         if (beatExists) return await res.status(400).json({ message: "Beat name should be unique" })
-        const db_genres = await Genres.find({ _id: { $in: req.body?.genre } }).select("name");
-        const db_tags = await Tags.find({ _id: { $in: req.body?.tag } });
-        // uploading mp3, wav, stems and image to s3
-        const uploadPromises = Object.entries(req.files).map(([key, data]) => {
-            let file = data[0];
-            const fileExtension = file.originalname.split(".").pop();
-            const fileName = `${Math.floor(Math.random() * 1000000000) + 1}.${fileExtension}`;
-            fileNames[key] = fileName;
-            let params = {
-                Bucket: process.env.BUCKET_NAME,
-                Body: file.buffer,
-                Key: fileName,
-                ContentType: file.mimetype
-            }
-            const command = new PutObjectCommand(params);
-            return s3.send(command);
-        });
-        await Promise.all(uploadPromises);
+        const db_genres = await Genres.find({ _id: { $in: req.body?.genre || [] } }).select("name");
+        const db_tags = await Tags.find({ _id: { $in: req.body?.tag || [] } });
+        const { errors, fileNames } = await uploadFilesToS3(req.files);
+
+        if (errors.length > 0) {
+            return res.status(400).json({ errors });
+        }
         const beat = await Beats.create({ name, bpm, key, files: fileNames, genre: db_genres?.map(item => item?.name), tags: db_tags?.map(item => item?.name) });
         res.status(201).json({ message: `${beat.name} Uploaded Successfully`, data: beat });
     } catch (err) {
@@ -222,18 +177,13 @@ const uploadBeat = async (req, res) => {
 }
 
 const deleteBeat = async (req, res) => {
+
     if (!req.params?.id) return res.status(404).json({ message: "beat id is required" });
     const { id: _id } = req.params
     try {
         const { files } = await Beats.findOne({ _id }).select(" -_id");
-        const params = {
-            Bucket: process.env.BUCKET_NAME,
-            Delete: {
-                Objects: Object.values(files.toObject()).map(file => ({ Key: file }))
-            }
-        }
-        let command = new DeleteObjectsCommand(params)
-        await s3.send(command);  //deleting files from S3
+        const errors = await removeFilesFroms3(files.toObject())
+        if (errors.length > 0) return res.status(400).json({ message: "Something went wrong!" });
         let deleted = await Beats.findOneAndDelete({ _id }) //deleting files from DB
         return res.json({ message: `${deleted.name} Deleted Successfully` });
     } catch (err) {
@@ -241,6 +191,131 @@ const deleteBeat = async (req, res) => {
     }
 }
 
+const updateBeat = async (req, res) => {
+    if (!req.params?.id) return res.status(404).json({ message: "Beat Id is required!" });
+    const { id: _id } = req.params;
+    let filenames = {};
+    try {
+        const { files } = await Beats.findOne({ _id });
+
+        if (Object.keys(req.files).length > 0) {
+            let filesToDelete = {}
+            Object.entries(req.files).map(([key, data]) => {
+                filesToDelete[key] = files[key];
+            })
+            let { errors, fileNames } = await uploadFilesToS3(req.files);
+            let removeErrors = await removeFilesFroms3(filesToDelete);
+            filenames = fileNames;
+
+            if (errors.length > 0 || removeErrors.length > 0) {
+                return res.status(400).json({ message: "Failed to upload files" });
+            }
+        }
+
+
+
+        const db_genres = await Genres.find({ _id: { $in: req.body?.genre } }).select("name");
+        const db_tags = await Tags.find({ _id: { $in: req.body?.tag } }).select("name");
+
+        let updatedData = { ...req.body };
+
+        if (Object.keys(filenames).length > 0) {
+            for (const [key, value] of Object.entries(filenames)) {
+                updatedData[`files.${key}`] = value;
+            }
+        }
+        if (db_genres) {
+            updatedData.genre = db_genres?.map(item => item?.name);
+        }
+
+        if (db_tags) {
+            updatedData.tags = db_tags?.map(item => item?.name)
+        }
+        const updatedBeat = await Beats.findByIdAndUpdate({ _id }, { $set: updatedData }, { new: true });
+        return res.json({ message: `${updatedBeat.name} updated successfully`, data: updatedBeat });
+    } catch (err) {
+        return res.status(400).json({ message: err });
+    }
+}
+
+const uploadFilesToS3 = async (files) => {
+
+    let fileNames = {};
+
+    let errors = [];
+
+    let validTypes = {
+        mp3: ["audio/mpeg"],
+        wav: ["audio/wav", "audio/wave", "audio/x-wav"],
+        trackout: ["application/zip", "application/rar", "application/x-rar-compressed", "application/x-zip-compressed"],
+        image: ["image/png", "image/jpeg", "image/jpg"]
+    }
+
+    try {
+        let sentFiles = Object.entries(files).map(([key, data]) => {
+
+            let file = data[0];
+            const fileExtension = file.originalname.split(".").pop();
+            const fileName = `${Math.floor(Math.random() * 1000000000) + 1}.${fileExtension}`;
+            fileNames[key] = fileName;
+
+            if (key == "image" && !validTypes.image.includes(file.mimetype)) {
+                errors.push("Only .png, .jpg, .jpeg files are allowed in the image field.");
+                return
+            }
+
+            if (key == "wav" && !validTypes.wav.includes(file.mimetype)) {
+                errors.push("Only .wav files are allowed in the wav field.");
+                return
+            }
+
+            if (key == "mp3" && !validTypes.mp3.includes(file.mimetype)) {
+                errors.push("Only .mp3 files are allowed in the mp3 field.");
+                return
+            }
+
+            if (key == "trackout" && !validTypes.trackout.includes(file.mimetype)) {
+                errors.push("Only .zip or .rar files are allowed in the trackout field.");
+                return
+            }
+
+            let params = {
+                Bucket: process.env.BUCKET_NAME,
+                Body: file.buffer,
+                Key: fileName,
+                ContentType: file.mimetype
+            }
+            const command = new PutObjectCommand(params);
+            s3.send(command);
+        });
+
+        await Promise.all(sentFiles)
+    } catch (err) {
+        errors.push(err);
+    }
+    return { fileNames, errors };
+
+};
+
+const removeFilesFroms3 = async (files) => {
+    let errors = [];
+
+    try {
+        const params = {
+            Bucket: process.env.BUCKET_NAME,
+            Delete: {
+                Objects: Object.values(files).map(file => ({ Key: file }))
+            }
+        }
+        let command = new DeleteObjectsCommand(params)
+        let results = await s3.send(command);  //deleting files from S3
+    } catch (err) {
+
+        errors.push(err)
+    }
+
+    return errors
+}
 module.exports = {
     createGenre,
     updateGenre,
@@ -255,5 +330,6 @@ module.exports = {
     deleteLicense,
     getLicenses,
     uploadBeat,
-    deleteBeat
+    deleteBeat,
+    updateBeat
 }
