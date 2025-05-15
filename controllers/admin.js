@@ -1,5 +1,6 @@
 const { S3Client, PutObjectCommand, DeleteObjectsCommand } = require("@aws-sdk/client-s3");
 const { Genres, Beats, Tags, Licenses } = require("../models/beat");
+const { getIO } = require("../config/socket");
 const s3 = new S3Client({
     credentials: {
         accessKeyId: process.env.BUCKET_ACCESS_KEY,
@@ -16,6 +17,8 @@ const createGenre = async (req, res) => {
         const alreadyExists = await Genres.findOne({ name });
         if (alreadyExists) return res.status(400).json({ message: "Genre already exists!" });
         const genre = await Genres.create({ name });
+        const io = getIO();
+        io.emit("new_genre", genre);
         return res.json({ message: `${genre.name} created successfully`, data: genre });
     } catch (err) {
         res.status(400).json({ message: err })
@@ -170,7 +173,11 @@ const uploadBeat = async (req, res) => {
             return res.status(400).json({ errors });
         }
         const beat = await Beats.create({ name, bpm, key, files: fileNames, genre: db_genres?.map(item => item?.name), tags: db_tags?.map(item => item?.name) });
-        res.status(201).json({ message: `${beat.name} Uploaded Successfully`, data: beat });
+        const io = getIO();
+        io.emit("new_beat", beat);
+        return res.status(201).json({ message: `${beat.name} Uploaded Successfully`, data: beat });
+
+
     } catch (err) {
         res.status(400).json({ message: err.message || "Upload failed" });
     }
