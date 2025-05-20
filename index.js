@@ -16,6 +16,7 @@ app.use(cors());
 const server = http.createServer(app);
 setupSocketIO(server);
 // routes
+app.get("/", (req, res) => res.json("Route is working fine"));
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", authenticate, authorizeAdmin, adminRoutes);
 // app.use("/api/test", adminRoutes);
