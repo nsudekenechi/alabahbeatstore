@@ -60,6 +60,18 @@ const getGenres = async (req, res) => {
     }
 }
 
+const getGenre = async (req, res) => {
+
+    if (!req.params?.id) return res.status(400).json({ message: "Id is required" })
+    const { id: _id } = req.params;
+    try {
+        const genres = await Genres.findById(_id);
+        return res.json(genres)
+    } catch (err) {
+        return res.status(400).json({ message: err })
+    }
+}
+
 // Genre controller ends
 
 // Tag Controller Starts 
@@ -114,8 +126,8 @@ const getTag = async (req, res) => {
     try {
         if (!req.params?.id) return res.status(400).json({ message: "Id is required" })
         const { id: _id } = req.params;
-        const tags = await Tags.findOne({ _id });
-        return res.json(tags)
+        const tag = await Tags.findOneById({ _id });
+        return res.json("yooo")
     } catch (err) {
         return res.status(400).json({ message: err })
     }
@@ -361,6 +373,7 @@ module.exports = {
     updateGenre,
     deleteGenre,
     getGenres,
+    getGenre,
     createTag,
     updateTag,
     deleteTag,
