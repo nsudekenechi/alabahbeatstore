@@ -27,8 +27,8 @@ const login = async (req, res) => {
         if (!user) return res.status(404).json({ message: "Email or Password is not correct!" });
         const passwordMatched = await bcrypt.compare(password, user.password);
         if (!passwordMatched) return res.status(400).json({ message: "Email or Password is not correct!" });
-        const token = jwt.sign({ message: "User logged in successfully", data: user }, process.env.JWT_KEY);
-        return res.json({ token });
+        const token = jwt.sign({ user }, process.env.JWT_KEY);
+        return res.json({ message: "User Logged in Successfully", data: token });
     } catch (err) {
         return res.status(400).json({ message: err })
     }

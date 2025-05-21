@@ -271,7 +271,7 @@ const getBeat = async (req, res) => {
         if (!req.params?.id) return res.status(400).json({ message: "Beat id is required!" })
         const { id: _id } = req.params;
 
-        const beat = await Beats.findOne({ _id })
+        const beat = await Beats.findOne({ _id });
         return res.json(beat)
     } catch (err) {
         res.status(400).json({ message: err })
