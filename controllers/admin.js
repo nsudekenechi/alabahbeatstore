@@ -103,7 +103,7 @@ const deleteTag = async (req, res) => {
 const getTags = async (req, res) => {
     try {
 
-        const tags = await Tags.findOne({});
+        const tags = await Tags.find({});
         return res.json(tags)
     } catch (err) {
         return res.status(400).json({ message: err })

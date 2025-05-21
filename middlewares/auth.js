@@ -5,7 +5,6 @@ const authenticate = async (req, res, next) => {
         if (!authorization) return res.status(400).json({ message: "An authorization token is required" });
         const token = authorization.split(" ")[1];
         const { user } = jwt.verify(token, process.env.JWT_KEY);
-        console.log(user)
         req.user = user
         next();
     } catch (err) {
