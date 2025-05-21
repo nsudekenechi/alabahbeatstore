@@ -46,8 +46,8 @@ router.route("/beat/:id").delete(deleteBeat).patch(upload.fields(
 router.route("/genre").post(createGenre).get(getGenres);
 router.route("/genre/:id").patch(updateGenre).delete(deleteGenre).get(getBeat);
 
-router.route("/tag").post(createTag).get(getTag);
-router.route("/tag/:id").patch(updateTag).delete(deleteTag);
+router.route("/tag").post(createTag).get(getTags);
+router.route("/tag/:id").patch(updateTag).delete(deleteTag).get(getTag);
 
 router.route("/license").post(createLicense).get(getLicenses);
 router.route("/license/:id").patch(updateLicense).delete(deleteLicense);
