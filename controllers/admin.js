@@ -126,8 +126,8 @@ const getTag = async (req, res) => {
     try {
         if (!req.params?.id) return res.status(400).json({ message: "Id is required" })
         const { id: _id } = req.params;
-        const tag = await Tags.findOneById({ _id });
-        return res.json("yooo")
+        const tag = await Tags.findById(_id);
+        return res.json(tag)
     } catch (err) {
         return res.status(400).json({ message: err })
     }
@@ -175,6 +175,17 @@ const getLicenses = async (req, res) => {
     try {
         const licenses = await Licenses.find({});
         return res.json(licenses)
+    } catch (err) {
+        return res.status(400).json({ message: err })
+    }
+}
+
+const getLicense = async (req, res) => {
+    try {
+        if (!req.params?.id) return res.status(400).json({ message: "Id is required" })
+        const { id: _id } = req.params;
+        const licenses = await Licenses.findById(_id);
+        return res.json(licenses);
     } catch (err) {
         return res.status(400).json({ message: err })
     }
@@ -383,6 +394,7 @@ module.exports = {
     updateLicense,
     deleteLicense,
     getLicenses,
+    getLicense,
     uploadBeat,
     deleteBeat,
     updateBeat,
