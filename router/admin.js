@@ -1,5 +1,5 @@
 const express = require("express");
-const { uploadBeat, createGenre, updateGenre, deleteGenre, getGenres, createTag, getTags, updateTag, deleteTag, createLicense, getLicenses, updateLicense, deleteLicense, deleteBeat, updateBeat, getBeat, getBeats, getTag, getGenre } = require("../controllers/admin");
+const { uploadBeat, createGenre, updateGenre, deleteGenre, getGenres, createTag, getTags, updateTag, deleteTag, createLicense, getLicenses, updateLicense, deleteLicense, deleteBeat, updateBeat, getBeat, getBeats, getTag, getGenre, getLicense } = require("../controllers/admin");
 const router = express.Router();
 const multer = require("multer");
 const storage = multer.memoryStorage();
@@ -50,5 +50,5 @@ router.route("/tag").post(createTag).get(getTags);
 router.route("/tag/:id").patch(updateTag).delete(deleteTag).get(getTag);
 
 router.route("/license").post(createLicense).get(getLicenses);
-router.route("/license/:id").patch(updateLicense).delete(deleteLicense);
+router.route("/license/:id").patch(updateLicense).delete(deleteLicense).get(getLicense);
 module.exports = router
