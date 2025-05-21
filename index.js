@@ -20,5 +20,5 @@ setupSocketIO(server);
 app.get("/", (req, res) => res.json("Route is working fine"));
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", authenticate, authorizeAdmin, adminRoutes);
-app.use("/api/user",)
+// app.use("/api/user", )
 server.listen(port, () => console.log(`Server Started on http://localhost:${port}`));
