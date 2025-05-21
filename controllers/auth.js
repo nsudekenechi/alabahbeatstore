@@ -10,7 +10,9 @@ const signup = async (req, res) => {
         const hashPassword = await bcrypt.hash(password, 10)
         const user = await User.create({ email, password: hashPassword, fullname });
         const token = jwt.sign({ user }, process.env.JWT_KEY)
-        return res.status(201).json({ token });
+        return res.status(201).json({
+            message: "Account created successfully", data: token
+        });
     } catch (err) {
         return res.status(400).json({ message: err });
     }
@@ -25,7 +27,7 @@ const login = async (req, res) => {
         if (!user) return res.status(404).json({ message: "Email or Password is not correct!" });
         const passwordMatched = await bcrypt.compare(password, user.password);
         if (!passwordMatched) return res.status(400).json({ message: "Email or Password is not correct!" });
-        const token = jwt.sign({ user }, process.env.JWT_KEY);
+        const token = jwt.sign({ message: "User logged in successfully", data: user }, process.env.JWT_KEY);
         return res.json({ token });
     } catch (err) {
         return res.status(400).json({ message: err })

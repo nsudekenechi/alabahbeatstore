@@ -102,7 +102,19 @@ const deleteTag = async (req, res) => {
 
 const getTags = async (req, res) => {
     try {
-        const tags = await Tags.find({});
+
+        const tags = await Tags.findOne({});
+        return res.json(tags)
+    } catch (err) {
+        return res.status(400).json({ message: err })
+    }
+}
+
+const getTag = async (req, res) => {
+    try {
+        if (!req.params?.id) return res.status(400).json({ message: "Id is required" })
+        const { id: _id } = req.params;
+        const tags = await Tags.findOne({ _id });
         return res.json(tags)
     } catch (err) {
         return res.status(400).json({ message: err })
@@ -351,6 +363,7 @@ module.exports = {
     updateTag,
     deleteTag,
     getTags,
+    getTag,
     createLicense,
     updateLicense,
     deleteLicense,
