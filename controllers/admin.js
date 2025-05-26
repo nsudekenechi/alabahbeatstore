@@ -1,4 +1,6 @@
-const { S3Client, PutObjectCommand, DeleteObjectsCommand } = require("@aws-sdk/client-s3");
+const { S3Client, PutObjectCommand, DeleteObjectsCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+
 const { Genres, Beats, Tags, Licenses } = require("../models/beat");
 const { getIO } = require("../config/socket");
 const s3 = new S3Client({
@@ -283,8 +285,12 @@ const updateBeat = async (req, res) => {
 const getBeats = async (req, res) => {
     try {
         const beats = await Beats.find({});
-        return res.json(beats)
+        // getting downloadable or signed URL for only images and mp3 files from S3
+        const beatsWithUrl = await getSignedURL(beats);
+        return res.json(beatsWithUrl);
+
     } catch (err) {
+        console.error(err)
         res.status(400).json({ message: err })
     }
 }
@@ -295,9 +301,12 @@ const getBeat = async (req, res) => {
         const { id: _id } = req.params;
 
         const beat = await Beats.findOne({ _id });
-        return res.json(beat)
+        // getting downloadable or signed URL for only images and mp3 files from S3
+        const beatsWithUrl = await getSignedURL([beat]);
+        return res.json(beatsWithUrl[0]);
     } catch (err) {
         res.status(400).json({ message: err })
+        console.log(err)
     }
 }
 
@@ -355,6 +364,7 @@ const uploadFilesToS3 = async (files) => {
         await Promise.all(sentFiles)
     } catch (err) {
         errors.push(err);
+        console.error(err);
     }
     return { fileNames, errors };
 
@@ -379,6 +389,31 @@ const removeFilesFroms3 = async (files) => {
 
     return errors
 }
+
+const getSignedURL = async (data) => {
+    const beatsWithUrl = await Promise.all(
+        data.map(async (item) => {
+            let beat = item.toObject();
+            beat.url = {};
+
+            for (const [key, fileName] of Object.entries(beat.files)) {
+                if (key === "image" || key === "mp3") {
+                    const getObjectParams = {
+                        Bucket: process.env.BUCKET_NAME,
+                        Key: fileName,
+                    };
+                    const command = new GetObjectCommand(getObjectParams);
+                    const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
+                    beat.url[key] = url;
+                }
+            }
+
+            return beat;
+        })
+    );
+
+    return beatsWithUrl;
+}
 module.exports = {
     createGenre,
     updateGenre,
@@ -399,5 +434,6 @@ module.exports = {
     deleteBeat,
     updateBeat,
     getBeats,
-    getBeat
+    getBeat,
+    s3
 }

@@ -1,4 +1,7 @@
 const express = require("express");
 const router = express.Router();
-
-module.exports = router
+const { getBeat, getBeats, getLicense } = require("../controllers/admin");
+router.route("/beat").get(getBeats);
+router.route("/beat/:id").get(getBeat);
+router.route("/license").get(getLicense);
+module.exports = router;
