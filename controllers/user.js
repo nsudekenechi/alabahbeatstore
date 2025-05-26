@@ -46,7 +46,7 @@ const getCart = async (req, res) => {
                 cart_id: item._id
             })
         }
-        return res.json(cartItems);
+        return res.json({ cartItems, total: cartItems.reduce((total, item) => total + item.price, 0) });
     } catch (err) {
         console.log(err)
         return res.status(400).json({ err })
