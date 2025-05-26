@@ -435,5 +435,6 @@ module.exports = {
     updateBeat,
     getBeats,
     getBeat,
+    getSignedURL,
     s3
 }
