@@ -47,8 +47,28 @@ const Cart = mongoose.Schema({
 
 });
 
-
+const Orders = mongoose.Schema({
+    user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "users",
+        required: [true, "User ID is required!"]
+    },
+    verified: {
+        type: Boolean,
+        default: false
+    },
+    reference: String,
+    amount: Number,
+    cartItems: [
+        {
+            beat: String,
+            license: String,
+            price: Number
+        }
+    ],
+})
 module.exports = {
     User: mongoose.model("users", User),
-    Cart: mongoose.model("cart", Cart)
+    Cart: mongoose.model("cart", Cart),
+    Orders: mongoose.model("orders", Orders)
 };

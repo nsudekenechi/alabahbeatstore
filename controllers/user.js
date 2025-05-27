@@ -1,13 +1,13 @@
 const { Beats, Licenses } = require("../models/beat");
-const { Cart } = require("../models/user");
+const { Cart, Orders } = require("../models/user");
 const { getSignedURL } = require("./admin");
 
 const addToCart = async (req, res) => {
 
-    if (!req.body?.beat) return res.status(400).json({ err: "Beat and License are required." });
+    if (!req.body?.beat || !req.body?.license) return res.status(400).json({ err: "Beat and License are required." });
     const { beat, license } = req.body;
     try {
-        const beatExists = await Cart.findOne({ "cart.beat": beat })
+        const beatExists = await Cart.findOne({ "cart.beat": beat }) //getting beat id inside cart array => cart.beat
         const alreadyAdded = await Cart.findOne({ user: req.user._id });
         if (beatExists) return res.status(400).json({ err: "You’ve already added this beat to your cart. Please select another." });
         let cart = !alreadyAdded ? await Cart.create(({
@@ -74,4 +74,60 @@ const deleteCartItem = async (req, res) => {
 
     }
 }
-module.exports = { addToCart, getCart, deleteCartItem }
+
+const checkoutWithPaystack = async (req, res) => {
+    const { email, _id: user } = req.user;
+    const { cart } = await Cart.findOne({ user });
+    let totalAmount = 0;
+    let cartItems = [];
+    try {
+        // getting prices of items from user's cart instead of getting directly from frontend
+        for (const cartItem of cart) {
+            const { license, beat } = cartItem;
+            const { price, name: licenseName } = await Licenses.findById(license);
+            const { name: beatName } = await Beats.findById(beat);
+            totalAmount += price;
+            cartItems.push({
+                beat: beatName,
+                license: licenseName,
+                price
+            })
+        }
+
+        let { data: { authorization_url, reference } } = await handlePaymentWithPayStack(email, totalAmount);
+        // storing orders
+        await Orders.create({
+            user,
+            reference,
+            amount: totalAmount,
+            cartItems
+        })
+        return res.json({ authorization_url, reference });
+    } catch (err) {
+        console.error(err)
+        return res.json({ err });
+
+    }
+}
+
+const verifyPaymentWithPayStack = async (req, res) => {
+
+}
+const handlePaymentWithPayStack = async (email, amount) => {
+    const req = await fetch("https://api.paystack.co/transaction/initialize", {
+        method: "POST",
+        headers: {
+            "Authorization": `Bearer ${process.env.PAYSTACK_SK}`,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, amount: amount * 100, callback_url: "http://alabahbeatstore.com/user/dashboard" }),
+    })
+
+    const resp = await req.json();
+    return resp
+}
+
+const handlePaymentWithFlutterWave = () => {
+
+}
+module.exports = { addToCart, getCart, deleteCartItem, checkoutWithPaystack, verifyPaymentWithPayStack }
