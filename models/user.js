@@ -61,8 +61,16 @@ const Orders = mongoose.Schema({
     amount: Number,
     cartItems: [
         {
-            beat: String,
-            license: String,
+            beat: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "beats",
+                required: true
+            },
+            license: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "licenses",
+                required: true
+            },
             price: Number
         }
     ],

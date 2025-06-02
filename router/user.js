@@ -14,5 +14,5 @@ router.route("/license/:id").get(getLicense);
 router.route("/cart").all(authenticate).post(addToCart).get(getCart)
 router.route("/cart/:id").all(authenticate).delete(deleteCartItem);
 router.route("/checkout/paystack").all(authenticate).post(checkoutWithPaystack);
-router.route("/checkout/paystack/verify/:reference").all(authenticate).post(verifyPaymentWithPayStack);
+router.route("/checkout/paystack/:reference").all(authenticate).post(verifyPaymentWithPayStack);
 module.exports = router;

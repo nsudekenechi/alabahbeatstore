@@ -84,12 +84,11 @@ const checkoutWithPaystack = async (req, res) => {
         // getting prices of items from user's cart instead of getting directly from frontend
         for (const cartItem of cart) {
             const { license, beat } = cartItem;
-            const { price, name: licenseName } = await Licenses.findById(license);
-            const { name: beatName } = await Beats.findById(beat);
+            const { price } = await Licenses.findById(license);
             totalAmount += price;
             cartItems.push({
-                beat: beatName,
-                license: licenseName,
+                beat,
+                license,
                 price
             })
         }
@@ -111,7 +110,24 @@ const checkoutWithPaystack = async (req, res) => {
 }
 
 const verifyPaymentWithPayStack = async (req, res) => {
+    if (!req.params.reference) return res.status(400).json({ err: "No transaction reference provided" });
+    const { reference } = req.params;
+    const { data, err } = await handleVerifyPaymentWithPayStack(reference);
+    if (err) return res.status(400).json({ err });
+    if (data.status != "success") return res.status(400).json({ err: "Couldn't verify payment, something went wrong" })
+    try {
+        // update order
+        await Orders.findOneAndUpdate({ reference }, { verified: true });
+        // send user download link 
 
+        // removing from Cart
+
+
+
+    } catch (err) {
+        console.error(err)
+        return res.status(400).json({ err })
+    }
 }
 const handlePaymentWithPayStack = async (email, amount) => {
     const req = await fetch("https://api.paystack.co/transaction/initialize", {
@@ -130,4 +146,21 @@ const handlePaymentWithPayStack = async (email, amount) => {
 const handlePaymentWithFlutterWave = () => {
 
 }
+
+const handleVerifyPaymentWithPayStack = async (reference) => {
+    let response = {
+        data: null,
+        err: null
+    };
+    try {
+        let req = await fetch(`https://api.paystack.co/transaction/verify/${reference}`, { headers: { Authorization: `Bearer ${process.env.PAYSTACK_SK}` } })
+        let res = await req.json();
+        response.data = res.data;
+    } catch (err) {
+        response.err = err
+    }
+
+    return response
+}
+
 module.exports = { addToCart, getCart, deleteCartItem, checkoutWithPaystack, verifyPaymentWithPayStack }
