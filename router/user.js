@@ -15,4 +15,6 @@ router.route("/cart").all(authenticate).post(addToCart).get(getCart)
 router.route("/cart/:id").all(authenticate).delete(deleteCartItem);
 router.route("/checkout/paystack").all(authenticate).post(checkoutWithPaystack);
 router.route("/checkout/paystack/:reference").all(authenticate).post(verifyPaymentWithPayStack);
+
+
 module.exports = router;

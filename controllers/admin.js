@@ -393,19 +393,17 @@ const removeFilesFroms3 = async (files) => {
 const getSignedURL = async (data) => {
     const beatsWithUrl = await Promise.all(
         data.map(async (item) => {
-            let beat = item.toObject();
+            let beat = typeof item === "object" ? item : item.toObject();
             beat.url = {};
 
             for (const [key, fileName] of Object.entries(beat.files)) {
-                if (key === "image" || key === "mp3") {
-                    const getObjectParams = {
+                 const getObjectParams = {
                         Bucket: process.env.BUCKET_NAME,
                         Key: fileName,
                     };
                     const command = new GetObjectCommand(getObjectParams);
                     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });
                     beat.url[key] = url;
-                }
             }
 
             return beat;

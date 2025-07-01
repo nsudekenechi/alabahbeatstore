@@ -4,8 +4,7 @@ const cors = require("cors")
 const app = express();
 const port = process.env.PORT || 3001;
 const http = require("http")
-
-const DB = require("./config/db"); //DB Connection
+const DB = require("./config/db");
 const authRoutes = require("./router/auth");
 const adminRoutes = require("./router/admin");
 const userRoutes = require("./router/user");
@@ -16,6 +15,8 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: false }));
 app.use(cors());
 const server = http.createServer(app);
+
+DB();
 setupSocketIO(server);
 
 // Protected routes

@@ -1,5 +1,7 @@
+const { ListBucketIntelligentTieringConfigurationsCommand, GetObjectCommand, S3Client } = require("@aws-sdk/client-s3");
+const sendEmail = require("../config/mail");
 const { Beats, Licenses } = require("../models/beat");
-const { Cart, Orders } = require("../models/user");
+const { Cart, Orders, User } = require("../models/user");
 const { getSignedURL } = require("./admin");
 
 const addToCart = async (req, res) => {
@@ -118,14 +120,49 @@ const verifyPaymentWithPayStack = async (req, res) => {
     try {
         // update order
         await Orders.findOneAndUpdate({ reference }, { verified: true });
+
         // send user download link 
+        const order = await Orders.findOne({reference}).populate({
+                    path: 'cartItems.beat', // populate beatId
+                    model: 'beats'
+                    }).populate({
+                    path: 'cartItems.license', // populate licenseId
+                    model: 'licenses'
+        }).populate({
+            path: 'user',
+            model: 'users'
+        });
 
-        // removing from Cart
+        const {user, cartItems} = order;
+        let body = "";
+        for (const { beat, license } of cartItems.toObject()) {
+        const beatUrl = await getSignedURL([beat]); // assuming returns [{ url: { image, mp3, etc } }]
+        const urls = beatUrl[0].url;
+        
+        // Add image
+        body += `<img src='${urls["image"]}' class='beat-img'/>`;
 
+        // UPDATING BEAT TO NOT AVAILABLE, WHEN PURCHASE IS EXCLUSIVE
+        if(license.name.includes("exclusive")){
+            await Beats.findByIdAndUpdate( beat._id, {isAvailable: false});
+        }
 
+        // Add license download links
+        for (const format of license.format) {
+        const downloadLink = urls[format];
+        body += `<a href='${downloadLink}' download class='download-btn'>Download ${format}</a>`;
+        console.log(body);
+        }
+        }
 
-    } catch (err) {
-        console.error(err)
+        // sending user email
+        sendEmail(user.email, "Your beat is ready for download", body, "User");
+
+        //Clearing  user's cart 
+    await Cart.findOneAndDelete({user: user._id});
+    return res.json({msg:"Order delivered Successfully"});
+
+} catch (err) {
         return res.status(400).json({ err })
     }
 }

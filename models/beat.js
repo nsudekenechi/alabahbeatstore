@@ -121,6 +121,10 @@ const Beats = mongoose.Schema({
         },
         required: true,
         _id: false
+    },
+    isAvailable: {
+            type: Boolean,
+            default: true
     }
 })
 
