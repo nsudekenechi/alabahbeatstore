@@ -1,7 +1,7 @@
 require("dotenv").config();
 const nodemailer = require("nodemailer");
 const path = require("path");
-const templatePath = path.join(__dirname, "../", "emailtemplate.ejs");
+const templatePath = path.join(__dirname, "../templates/", "emailtemplate.ejs");
 const ejs = require("ejs");
 
 const transporter = nodemailer.createTransport({
@@ -14,14 +14,15 @@ const transporter = nodemailer.createTransport({
 }
 });
 
-const sendEmail = async (to, subject, body, username) => {
+const sendEmail = async (to, subject, body, username, attachments) => {
 try {
      const html = await ejs.renderFile(templatePath, {body, username});
     const mailOptions = {
       from: `${process.env.EMAIL_NAME} <${process.env.EMAIL_USER}>`,
       to,
       subject,
-      html
+      html,
+      attachments
     };
 
     await transporter.sendMail(mailOptions);

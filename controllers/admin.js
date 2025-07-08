@@ -284,7 +284,8 @@ const updateBeat = async (req, res) => {
 
 const getBeats = async (req, res) => {
     try {
-        const beats = await Beats.find({});
+     
+        const beats = req.user?.role == "admin" ? await Beats.find({}) : await Beats.find({isAvailable: true});
         // getting downloadable or signed URL for only images and mp3 files from S3
         const beatsWithUrl = await getSignedURL(beats);
         return res.json(beatsWithUrl);
@@ -300,7 +301,7 @@ const getBeat = async (req, res) => {
         if (!req.params?.id) return res.status(400).json({ message: "Beat id is required!" })
         const { id: _id } = req.params;
 
-        const beat = await Beats.findOne({ _id });
+        const beat = req.user?.role === "admin" ? await Beats.findOne({ _id }) : await Beats.findOne({ _id, isAvailable: true });
         // getting downloadable or signed URL for only images and mp3 files from S3
         const beatsWithUrl = await getSignedURL([beat]);
         return res.json(beatsWithUrl[0]);
@@ -390,7 +391,7 @@ const removeFilesFroms3 = async (files) => {
     return errors
 }
 
-const getSignedURL = async (data) => {
+const getSignedURL = async (data, isDownloadable = false) => {
     const beatsWithUrl = await Promise.all(
         data.map(async (item) => {
             let beat = typeof item === "object" ? item : item.toObject();
@@ -400,6 +401,7 @@ const getSignedURL = async (data) => {
                  const getObjectParams = {
                         Bucket: process.env.BUCKET_NAME,
                         Key: fileName,
+                         ResponseContentDisposition: isDownloadable ? `attachment; filename='${fileName}'` : "", 
                     };
                     const command = new GetObjectCommand(getObjectParams);
                     const url = await getSignedUrl(s3, command, { expiresIn: 3600 });

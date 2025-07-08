@@ -3,6 +3,7 @@ const sendEmail = require("../config/mail");
 const { Beats, Licenses } = require("../models/beat");
 const { Cart, Orders, User } = require("../models/user");
 const { getSignedURL } = require("./admin");
+const generateLicensePDFBuffer = require("../config/pdf-lib");
 
 const addToCart = async (req, res) => {
 
@@ -112,15 +113,16 @@ const checkoutWithPaystack = async (req, res) => {
 }
 
 const verifyPaymentWithPayStack = async (req, res) => {
+    
     if (!req.params.reference) return res.status(400).json({ err: "No transaction reference provided" });
     const { reference } = req.params;
     const { data, err } = await handleVerifyPaymentWithPayStack(reference);
     if (err) return res.status(400).json({ err });
     if (data.status != "success") return res.status(400).json({ err: "Couldn't verify payment, something went wrong" })
     try {
+
         // update order
         await Orders.findOneAndUpdate({ reference }, { verified: true });
-
         // send user download link 
         const order = await Orders.findOne({reference}).populate({
                     path: 'cartItems.beat', // populate beatId
@@ -135,10 +137,10 @@ const verifyPaymentWithPayStack = async (req, res) => {
 
         const {user, cartItems} = order;
         let body = "";
+        let beatPurchases = [];
         for (const { beat, license } of cartItems.toObject()) {
-        const beatUrl = await getSignedURL([beat]); // assuming returns [{ url: { image, mp3, etc } }]
+        const beatUrl = await getSignedURL([beat], true); // assuming returns [{ url: { image, mp3, etc } }]
         const urls = beatUrl[0].url;
-        
         // Add image
         body += `<img src='${urls["image"]}' class='beat-img'/>`;
 
@@ -146,25 +148,33 @@ const verifyPaymentWithPayStack = async (req, res) => {
         if(license.name.includes("exclusive")){
             await Beats.findByIdAndUpdate( beat._id, {isAvailable: false});
         }
-
-        // Add license download links
+       
+        // Add license format download links
         for (const format of license.format) {
         const downloadLink = urls[format];
         body += `<a href='${downloadLink}' download class='download-btn'>Download ${format}</a>`;
-        console.log(body);
-        }
         }
 
+        beatPurchases.push({title:beat.name, licenseType: license.name})
+        }
+     
+         // Adding attachments
+         let purchaseDate = new Date().toLocaleDateString("en-us", {dateStyle:"full"});
+         let licensePDF = await generateLicensePDFBuffer(beatPurchases, user.fullname, user.email, purchaseDate);
         // sending user email
-        sendEmail(user.email, "Your beat is ready for download", body, "User");
+        sendEmail(user.email, "Your beat is ready for download", body,  user.fullname, [{
+        filename: 'Beat_License.pdf',
+        content: licensePDF,
+        contentType: 'application/pdf',
+      }]);
 
-        //Clearing  user's cart 
+    //Clearing  user's cart 
     await Cart.findOneAndDelete({user: user._id});
     return res.json({msg:"Order delivered Successfully"});
 
 } catch (err) {
         return res.status(400).json({ err })
-    }
+}
 }
 const handlePaymentWithPayStack = async (email, amount) => {
     const req = await fetch("https://api.paystack.co/transaction/initialize", {
