@@ -1,0 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Urbanist:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+@theme {
+  --color-primary: #0E0E0E;
+  --color-accent: #9B5DE5;
+  --color-secondary: #1F1F1F;
+  --color-text: #F1F1F1;
+  --font-primary: "Bebas Neue", sans-serif;
+  --font-secondary: "Urbanist", sans-serif;
+  --font-display: "DM Sans", sans-serif;
+}
