@@ -6,4 +6,4 @@ export const postData = (url, data, config = {}) =>
   axios.post(`${baseURL}${url}`, data, config);
 export const updateData = (url, data, config = {}) =>
   axios.patch(`${baseURL}${url}`, data, config);
-export const deletData = (url, config = {}) => axios.delete(url, config);
+export const deleteData = (url, config = {}) => axios.delete(`${baseURL}${url}`, config);

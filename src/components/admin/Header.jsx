@@ -2,16 +2,14 @@ import React, { useState } from "react";
 import Logo from "../Logo";
 import { VscHome } from "react-icons/vsc";
 import { NavLink } from "react-router";
-import { TbLicense } from "react-icons/tb";
 import { BiCategory } from "react-icons/bi";
 import { LuBookText } from "react-icons/lu";
 import { BsFillMusicPlayerFill } from "react-icons/bs";
-import { TbActivityHeartbeat } from "react-icons/tb";
 import { LuListMusic } from "react-icons/lu";
 import { AiOutlineLogout } from "react-icons/ai";
 
 export default function Header() {
-  const [links, setLinks] = useState([
+  const links = [
     {
       Icon: VscHome,
       text: "home",
@@ -37,7 +35,7 @@ export default function Header() {
       Icon: AiOutlineLogout,
       text: "logout",
     },
-  ]);
+  ];
   return (
     <>
       <div className="hidden lg:block py-5">
@@ -51,9 +49,9 @@ export default function Header() {
               </li>
               <ul className="grid gap-7 bg-white p-4 shadow rounded-full">
                 {links.map(
-                  (link) =>
+                  (link, index) =>
                     !["logout"].includes(link.text) && (
-                      <li>
+                      <li key={index}>
                         <NavLink
                           to={link.text == "home" ? "" : link.text}
                           className={({ isActive }) =>
@@ -70,9 +68,9 @@ export default function Header() {
               {/* Bottom Nav */}
               <ul className="grid gap-7 bg-white p-4 shadow rounded-full">
                 {links.map(
-                  (link) =>
+                  (link, index) =>
                     ["logout"].includes(link.text) && (
-                      <li>
+                      <li key={index}>
                         <NavLink to={link.text}>
                           <link.Icon size={16} />
                         </NavLink>
@@ -89,9 +87,9 @@ export default function Header() {
         <nav className="fixed bg-white/20 backdrop-blur-lg w-[100%]  py-5 px-10 bottom-0 z-100">
           <ul className="flex items-center justify-center gap-3 bg-white p-4 shadow-2xl shadow-black/5 outline outline-black/20 rounded-full">
             {links.map(
-              (link) =>
+              (link, index) =>
                 !["logout"].includes(link.text) && (
-                  <li>
+                  <li key={index}>
                     <NavLink
                       to={link.text == "home" ? "" : link.text}
                       className={({ isActive }) =>

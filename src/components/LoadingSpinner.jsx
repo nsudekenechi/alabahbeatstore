@@ -1,4 +1,3 @@
-import React from "react";
 import { CgSpinnerTwoAlt } from "react-icons/cg";
 
 export default function LoadingSpinner({ size, color }) {

@@ -14,7 +14,7 @@ export default function DashboardLayout() {
   return (
     <div className="grid md:grid-cols-12 bg-[#fafafa]">
       <Header />
-      <div className="md:col-span-11 min-h-screen z-10">
+      <div className="md:col-span-11 min-h-screen z-10 md:p-10">
         <Outlet />
       </div>
     </div>
