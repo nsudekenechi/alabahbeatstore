@@ -14,10 +14,10 @@ const s3 = new S3Client({
 // Genre controller starts
 const createGenre = async (req, res) => {
     const { name } = req.body;
-    if (!name) return res.status(400).json({ message: "Genre name is required" })
+    if (!name) return res.status(400).json({ error: "Genre name is required" })
     try {
         const alreadyExists = await Genres.findOne({ name });
-        if (alreadyExists) return res.status(400).json({ message: "Genre already exists!" });
+        if (alreadyExists) return res.status(400).json({ error: "Genre already exists!" });
         const genre = await Genres.create({ name });
         const io = getIO();
         io.emit("new_genre", genre);
