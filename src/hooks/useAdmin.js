@@ -32,7 +32,6 @@ export const useTag = () => {
   const createTag = async (data) => {
     setisLoading(true);
     try {
-      console.log(data);
       const resp = await postData("/admin/tag", data, config);
       return resp.data;
     } catch (err) {
@@ -88,4 +87,72 @@ export const useTag = () => {
     }
   };
   return { isLoading, createTag, getTags, updateTag, deleteTag };
+};
+
+export const useGenre = () => {
+  const config = {
+    headers: {
+      Authorization: `Token ${sessionStorage.getItem("admin_token")}`,
+    },
+  };
+  const [isLoading, setisLoading] = useState(false);
+
+  const createGenre = async (data) => {
+    setisLoading(true);
+    try {
+      const resp = await postData("/admin/genre", data, config);
+      return resp.data;
+    } catch (err) {
+      toast(err.response.data.error, { type: "error" });
+      console.error(err.response);
+    } finally {
+      setTimeout(() => {
+        setisLoading(false);
+      }, 1000);
+    }
+  };
+
+  const getGenres = async () => {
+    setisLoading(true);
+    try {
+      const resp = await getData("/admin/genre", config);
+      return resp.data;
+    } catch (err) {
+      toast(err.response.data.error, { type: "error" });
+      console.error(err.response);
+    } finally {
+      setisLoading(false);
+    }
+  };
+
+  const updateGenre = async (data, id) => {
+    setisLoading(true);
+    try {
+      const resp = await updateData(`/admin/genre/${id}`, data, config);
+      return resp.data;
+    } catch (err) {
+      toast(err.response.data.error, { type: "error" });
+      console.error(err.response);
+    } finally {
+      setTimeout(() => {
+        setisLoading(false);
+      }, 1000);
+    }
+  };
+
+  const deleteGenre = async (id) => {
+    setisLoading(true);
+    try {
+      const resp = await deleteData(`/admin/genre/${id}`, config);
+      return resp.data;
+    } catch (err) {
+      toast(err.response.data.error, { type: "error" });
+      console.error(err.response);
+    } finally {
+      setTimeout(() => {
+        setisLoading(false);
+      }, 1000);
+    }
+  };
+  return { isLoading, createGenre, getGenres, updateGenre, deleteGenre };
 };
