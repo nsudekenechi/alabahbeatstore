@@ -154,5 +154,75 @@ export const useGenre = () => {
       }, 1000);
     }
   };
+
   return { isLoading, createGenre, getGenres, updateGenre, deleteGenre };
+};
+
+export const useLicense = () => {
+  const config = {
+    headers: {
+      Authorization: `Token ${sessionStorage.getItem("admin_token")}`,
+    },
+  };
+  const [isLoading, setisLoading] = useState(false);
+
+  const createLicense = async (data) => {
+    setisLoading(true);
+    try {
+      const resp = await postData("/admin/license", data, config);
+      return resp.data;
+    } catch (err) {
+      toast(err.response.data.error, { type: "error" });
+      console.error(err.response);
+    } finally {
+      setTimeout(() => {
+        setisLoading(false);
+      }, 1000);
+    }
+  };
+
+  const getLicenses = async () => {
+    setisLoading(true);
+    try {
+      const resp = await getData("/admin/license", config);
+      return resp.data;
+    } catch (err) {
+      toast(err.response.data.error, { type: "error" });
+      console.error(err.response);
+    } finally {
+      setisLoading(false);
+    }
+  };
+
+  const updateLicense = async (data, id) => {
+    setisLoading(true);
+    try {
+      const resp = await updateData(`/admin/license/${id}`, data, config);
+      return resp.data;
+    } catch (err) {
+      toast(err.response.data.error, { type: "error" });
+      console.error(err.response);
+    } finally {
+      setTimeout(() => {
+        setisLoading(false);
+      }, 1000);
+    }
+  };
+
+  const deleteLicense = async (id) => {
+    setisLoading(true);
+    try {
+      const resp = await deleteData(`/admin/license/${id}`, config);
+      return resp.data;
+    } catch (err) {
+      toast(err.response.data.error, { type: "error" });
+      console.error(err.response);
+    } finally {
+      setTimeout(() => {
+        setisLoading(false);
+      }, 1000);
+    }
+  };
+
+  return { isLoading, createLicense, getLicenses, updateLicense, deleteLicense };
 };
